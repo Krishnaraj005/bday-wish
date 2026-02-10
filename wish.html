@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>From Indore with Love</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@300;500&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #0a0a0c;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Montserrat', sans-serif;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 1. MAP & BACKGROUND */
+        .map-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #050505 100%);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            transition: opacity 1s ease;
+        }
+
+        .state-hub {
+            text-align: center;
+            z-index: 5;
+        }
+
+        .city-label {
+            font-size: 0.7rem;
+            letter-spacing: 3px;
+            color: #ff2d75;
+            margin-top: 10px;
+            text-transform: uppercase;
+        }
+
+        /* 2. THE TETHER (Connection Line) */
+        #connector-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .connection-line {
+            fill: none;
+            stroke: rgba(255, 45, 117, 0.3);
+            stroke-width: 2;
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+        }
+
+        /* 3. THE FLYING HEART */
+        .traveling-heart {
+            position: absolute;
+            font-size: 40px;
+            z-index: 10;
+            filter: drop-shadow(0 0 15px #ff2d75);
+            display: none;
+        }
+
+        /* 4. THE ROMANTIC CARD */
+        .romantic-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(15px);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 40px;
+            text-align: center;
+            width: 350px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            transform: translateY(50px);
+            opacity: 0;
+            transition: all 1s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .photo-reveal {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            border: 3px solid #ff2d75;
+            padding: 5px;
+            box-shadow: 0 0 30px rgba(255, 45, 117, 0.4);
+            overflow: hidden;
+        }
+
+        .photo-reveal img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+
+        h1 { font-family: 'Dancing Script', cursive; font-size: 3rem; color: #ff2d75; margin-bottom: 10px; }
+        p { color: #ccc; font-weight: 300; line-height: 1.6; font-size: 0.95rem; }
+
+        /* BUTTON */
+        .start-btn {
+            padding: 15px 40px;
+            background: transparent;
+            border: 2px solid #ff2d75;
+            color: #ff2d75;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 50px;
+            transition: 0.3s;
+            z-index: 200;
+        }
+
+        .start-btn:hover { background: #ff2d75; color: white; box-shadow: 0 0 30px #ff2d75; }
+
+    </style>
+</head>
+<body>
+
+    <audio id="bdaySong">
+        <source src="ed_sheeran_perfect.mp3" type="audio/mpeg">
+    </audio>
+
+    <button id="startBtn" class="start-btn" onclick="initJourney()">SEND MY HEART</button>
+
+    <div class="map-container" id="map">
+        <div class="state-hub" id="mp-hub">
+            <div style="font-size: 50px;">🏠</div>
+            <div class="city-label">Indore, MP</div>
+        </div>
+
+        <svg id="connector-svg">
+            <path id="path" class="connection-line" d="" />
+        </svg>
+
+        <div class="state-hub" id="rj-hub">
+            <div style="font-size: 50px;">🏰</div>
+            <div class="city-label">Rajasthan</div>
+        </div>
+    </div>
+
+    <div class="traveling-heart" id="heart">❤️</div>
+
+    <div class="romantic-overlay" id="overlay">
+        <div class="glass-card" id="card">
+            <div class="photo-reveal">
+              <img src="img.jpeg" alt="Birthday Friend">
+            </div>
+            <h1>Happy Birthday Cutie!</h1>
+            <p>From the heart of MP to the sands of Rajasthan... <br> Distance only makes the heartbeat louder. You're the closest person to me, always.</p>
+            <div style="margin-top: 20px; font-size: 25px;">🫶🏻🎀</div>
+        </div>
+    </div>
+
+    <script>
+        function initJourney() {
+            const btn = document.getElementById('startBtn');
+            const heart = document.getElementById('heart');
+            const path = document.getElementById('path');
+            const mp = document.getElementById('mp-hub').getBoundingClientRect();
+            const rj = document.getElementById('rj-hub').getBoundingClientRect();
+            
+            btn.style.display = 'none';
+            heart.style.display = 'block';
+
+            // Calculate Path
+            const startX = mp.left + mp.width/2;
+            const startY = mp.top + mp.height/2;
+            const endX = rj.left + rj.width/2;
+            const endY = rj.top + rj.height/2;
+
+            // Create curved SVG path
+            const d = `M${startX},${startY} Q${(startX+endX)/2},${startY-150} ${endX},${endY}`;
+            path.setAttribute('d', d);
+            path.style.strokeDashoffset = '0';
+            path.style.transition = 'stroke-dashoffset 10s linear';
+
+            // Move Heart along path logic
+            let startTime = null;
+            function animateHeart(timestamp) {
+                if (!startTime) startTime = timestamp;
+                let progress = (timestamp - startTime) / 10000; // 10 seconds
+
+                if (progress <= 1) {
+                    const point = document.getElementById('path').getPointAtLength(progress * document.getElementById('path').getTotalLength());
+                    heart.style.left = (point.x - 20) + 'px';
+                    heart.style.top = (point.y - 20) + 'px';
+                    requestAnimationFrame(animateHeart);
+                } else {
+                    finishJourney();
+                }
+            }
+            requestAnimationFrame(animateHeart);
+        }
+
+        function finishJourney() {
+            // Heart Blast
+            const heart = document.getElementById('heart');
+            heart.style.transform = 'scale(5)';
+            heart.style.opacity = '0';
+            heart.style.transition = 'all 0.5s ease';
+
+            // PLAY THE SONG
+            const song = document.getElementById('bdaySong');
+            song.play();
+
+            setTimeout(() => {
+                document.getElementById('map').style.opacity = '0';
+                document.getElementById('overlay').style.display = 'flex';
+                setTimeout(() => {
+                    const card = document.getElementById('card');
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                    createConfetti();
+                }, 100);
+            }, 500);
+        }
+
+        function createConfetti() {
+            for(let i=0; i<60; i++) {
+                const c = document.createElement('div');
+                c.innerHTML = ['❤️', '✨', '🌸', '💖'][Math.floor(Math.random()*4)];
+                c.style.position = 'fixed';
+                c.style.left = '50%';
+                c.style.top = '50%';
+                c.style.zIndex = '150';
+                c.style.fontSize = Math.random()*20+15+'px';
+                document.body.appendChild(c);
+
+                const tx = (Math.random()-0.5) * window.innerWidth;
+                const ty = (Math.random()-0.5) * window.innerHeight;
+
+                c.animate([
+                    { transform: 'translate(0,0) rotate(0deg)', opacity: 1 },
+                    { transform: `translate(${tx}px, ${ty}px) rotate(360deg)`, opacity: 0 }
+                ], { duration: 2000, easing: 'ease-out' });
+
+                setTimeout(() => c.remove(), 2000);
+            }
+        }
+    </script>
+</body>
+</html>
